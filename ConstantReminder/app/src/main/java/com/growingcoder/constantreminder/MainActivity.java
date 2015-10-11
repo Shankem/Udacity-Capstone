@@ -13,6 +13,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         findViewById(R.id.activity_main_fab_add).setOnClickListener(new AddReminderClickListener());
+
+        /*TODO when we remove a reminder we should treat cancelling it before it happens differently than
+         * when we do it if it has been set. Both cases we delete from DB, remove from list, but in one case
+         * we will cancel the pending intent of the alarm, the other we'll remove the notification.*/
     }
 
     private class AddReminderClickListener implements View.OnClickListener {

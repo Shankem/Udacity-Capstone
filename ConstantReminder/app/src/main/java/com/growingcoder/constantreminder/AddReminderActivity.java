@@ -4,11 +4,16 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
+
+import com.growingcoder.constantreminder.data.gen.Reminder;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -35,8 +40,6 @@ public class AddReminderActivity extends AppCompatActivity implements DatePicker
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //TODO add menu with save
-
         mReminderNameView = (EditText) findViewById(R.id.activity_add_reminder_edittext_name);
         mDateView = (TextView) findViewById(R.id.activity_add_reminder_textview_date);
         mTimeView = (TextView) findViewById(R.id.activity_add_reminder_textview_time);
@@ -48,6 +51,40 @@ public class AddReminderActivity extends AppCompatActivity implements DatePicker
 
         mDateView.setOnClickListener(new DateClickListener());
         mTimeView.setOnClickListener(new TimeClickListener());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_add_reminder, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_save) {
+            save();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void save() {
+        if (mReminderNameView.getText().toString().length() > 0) {
+            //TODO if it's in the past create the notification now, otherwise do alarm. Should be handled by receiver?
+            //TODO need to test but the alarm should fire immediately automatically if it's in the past
+            Reminder reminder = new Reminder(null, mReminderNameView.getText().toString(), mReminderCalendar.getTimeInMillis());
+            long reminderID = App.mDaoSession.getReminderDao().insert(reminder);
+
+            //TODO see http://stackoverflow.com/questions/3330522/how-to-cancel-this-repeating-alarm
+            //TODO see http://stackoverflow.com/questions/3595232/android-remove-notification-from-notification-bar
+            //TODO see https://developer.android.com/training/scheduling/alarms.html
+            finish();
+        } else {
+            Toast.makeText(App.sAppContext, R.string.save_validation_error, Toast.LENGTH_LONG).show();
+        }
+
     }
 
     private void updateDate() {
