@@ -3,4 +3,9 @@
     <color name="primary">#162955</color>
     <color name="primaryDark">#061539</color>
     <color name="accent">#4F628E</color>
+
+    <color name="card">#EFFAFF</color>
+
+    <color name="reminder_past">#CC4444</color>
+    <color name="reminder_current">#44CCCC</color>
 </resources>
