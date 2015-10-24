@@ -1,7 +1,10 @@
 package com.growingcoder.constantreminder;
 
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
@@ -72,19 +75,24 @@ public class AddReminderActivity extends AppCompatActivity implements DatePicker
 
     private void save() {
         if (mReminderNameView.getText().toString().length() > 0) {
-            //TODO if it's in the past create the notification now, otherwise do alarm. Should be handled by receiver?
-            //TODO need to test but the alarm should fire immediately automatically if it's in the past
             Reminder reminder = new Reminder(null, mReminderNameView.getText().toString(), mReminderCalendar.getTimeInMillis());
             long reminderID = App.mDaoSession.getReminderDao().insert(reminder);
-
-            //TODO see http://stackoverflow.com/questions/3330522/how-to-cancel-this-repeating-alarm
-            //TODO see http://stackoverflow.com/questions/3595232/android-remove-notification-from-notification-bar
-            //TODO see https://developer.android.com/training/scheduling/alarms.html
+            createAlarm(reminderID, reminder.getDateTime());
             finish();
         } else {
             Toast.makeText(App.sAppContext, R.string.save_validation_error, Toast.LENGTH_LONG).show();
         }
 
+    }
+
+    private void createAlarm(long id, Long time) {
+        Intent intent = new Intent(this, AlarmReceiver.class);
+        intent.setAction(AlarmReceiver.ACTION);
+        intent.putExtra(AlarmReceiver.EXTRA_REMINDER, id);
+        PendingIntent sender = PendingIntent.getBroadcast(this, (int)id, intent, 0);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, time, sender);
     }
 
     private void updateDate() {

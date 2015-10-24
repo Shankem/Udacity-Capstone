@@ -6,4 +6,8 @@
     <string name="reminder_name_hint">Enter reminder name</string>
     <string name="save_validation_error">Please enter a name before saving</string>
     <string name="empty_instructions">Tap the plus button in the corner to add a new reminder.</string>
+    <string name="notification_title">REMINDER</string>
+
+    <string name="remove_reminder">Remove Reminder</string>
+    <string name="finished_reminder_confirmation">Are you done with this reminder?</string>
 </resources>

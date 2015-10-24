@@ -1,13 +1,20 @@
 package com.growingcoder.constantreminder;
 
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.growingcoder.constantreminder.data.gen.Reminder;
+import com.growingcoder.constantreminder.data.gen.ReminderDao;
 
 import java.util.List;
 
@@ -26,10 +33,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.activity_main_fab_add).setOnClickListener(new AddReminderClickListener());
 
         setupViews();
-
-        /*TODO when we remove a reminder we should treat cancelling it before it happens differently than
-         * when we do it if it has been set. Both cases we delete from DB, remove from list, but in one case
-         * we will cancel the pending intent of the alarm, the other we'll remove the notification.*/
     }
 
     @Override
@@ -74,7 +77,45 @@ public class MainActivity extends AppCompatActivity {
         public void onItemClick(View v, int position) {
             Reminder r = mAdapter.getItem(position);
 
-            //TODO some way to mark it complete/delete the notification
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage(R.string.finished_reminder_confirmation)
+                    .setPositiveButton(R.string.remove_reminder, new ReminderActionListener(r))
+                    .setNegativeButton(android.R.string.cancel, null);
+
+            builder.show();
+        }
+    }
+
+    /**
+     * Click listener to handle removing a reminder.
+     */
+    private class ReminderActionListener implements DialogInterface.OnClickListener {
+
+        private Reminder mReminder;
+
+        public ReminderActionListener(Reminder r) {
+            mReminder = r;
+        }
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+
+            // In case it has become a notification or is still a pending alarm, we'll just cancel both to be safe
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.cancel(mReminder.getId().intValue());
+
+            Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+            intent.setAction(AlarmReceiver.ACTION);
+            intent.putExtra(AlarmReceiver.EXTRA_REMINDER, mReminder.getId().longValue());
+            PendingIntent sender = PendingIntent.getBroadcast(MainActivity.this, mReminder.getId().intValue(), intent, 0);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+            alarmManager.cancel(sender);
+
+            ReminderDao reminderDao = App.mDaoSession.getReminderDao();
+            reminderDao.delete(mReminder);
+            mAdapter.setReminders(reminderDao.loadAll());
+            mAdapter.notifyDataSetChanged();
         }
     }
 }
