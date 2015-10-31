@@ -13,7 +13,7 @@ import com.growingcoder.constantreminder.data.gen.DaoSession;
  * @since 10/11/2015.
  */
 public class App extends Application {
-    private static final String DB_NAME = "reminders.db";
+    public static final String DB_NAME = "reminders.db";
 
     public static DaoSession mDaoSession;
     public static App sAppContext;

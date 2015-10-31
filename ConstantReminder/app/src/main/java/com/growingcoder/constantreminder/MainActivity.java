@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -19,7 +21,7 @@ import com.growingcoder.constantreminder.data.gen.ReminderDao;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Reminder>> {
 
     private ReminderAdapter mAdapter;
     private RecyclerView mRecyclerView;
@@ -37,18 +39,14 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.activity_main_fab_add).setOnClickListener(new AddReminderClickListener());
 
         setupViews();
+
+        getSupportLoaderManager().initLoader(0, null, this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (mAdapter != null) {
-            List<Reminder> reminders = App.mDaoSession.getReminderDao().loadAll();
-            mAdapter.setReminders(reminders);
-            mAdapter.notifyDataSetChanged();
-
-            mEmptyView.setVisibility(reminders.size() == 0 ? View.VISIBLE : View.GONE);
-        }
+        getSupportLoaderManager().restartLoader(0, null, this);
     }
 
     private void setupViews() {
@@ -66,6 +64,25 @@ public class MainActivity extends AppCompatActivity {
         mLayoutManager = new LinearLayoutManager(App.sAppContext);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mRecyclerView.setAdapter(mAdapter);
+    }
+
+    @Override
+    public Loader<List<Reminder>> onCreateLoader(int id, Bundle args) {
+        return new DataLoader(this);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<List<Reminder>> loader, List<Reminder> data) {
+        if (mAdapter != null) {
+            mAdapter.setReminders(data);
+            mAdapter.notifyDataSetChanged();
+
+            mEmptyView.setVisibility(data.size() == 0 ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<List<Reminder>> loader) {
     }
 
     private class AddReminderClickListener implements View.OnClickListener {
@@ -118,8 +135,8 @@ public class MainActivity extends AppCompatActivity {
 
             ReminderDao reminderDao = App.mDaoSession.getReminderDao();
             reminderDao.delete(mReminder);
-            mAdapter.setReminders(reminderDao.loadAll());
-            mAdapter.notifyDataSetChanged();
+
+            getSupportLoaderManager().restartLoader(0, null, MainActivity.this);
         }
     }
 }
